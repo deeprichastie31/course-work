@@ -1,0 +1,14 @@
+/home/kishlak/WebApp/Console.client/bin/Debug/net8.0/Console.client
+/home/kishlak/WebApp/Console.client/bin/Debug/net8.0/Console.client.deps.json
+/home/kishlak/WebApp/Console.client/bin/Debug/net8.0/Console.client.runtimeconfig.json
+/home/kishlak/WebApp/Console.client/bin/Debug/net8.0/Console.client.dll
+/home/kishlak/WebApp/Console.client/bin/Debug/net8.0/Console.client.pdb
+/home/kishlak/WebApp/Console.client/obj/Debug/net8.0/Console.client.GeneratedMSBuildEditorConfig.editorconfig
+/home/kishlak/WebApp/Console.client/obj/Debug/net8.0/Console.client.AssemblyInfoInputs.cache
+/home/kishlak/WebApp/Console.client/obj/Debug/net8.0/Console.client.AssemblyInfo.cs
+/home/kishlak/WebApp/Console.client/obj/Debug/net8.0/Console.client.csproj.CoreCompileInputs.cache
+/home/kishlak/WebApp/Console.client/obj/Debug/net8.0/Console.client.dll
+/home/kishlak/WebApp/Console.client/obj/Debug/net8.0/refint/Console.client.dll
+/home/kishlak/WebApp/Console.client/obj/Debug/net8.0/Console.client.pdb
+/home/kishlak/WebApp/Console.client/obj/Debug/net8.0/Console.client.genruntimeconfig.cache
+/home/kishlak/WebApp/Console.client/obj/Debug/net8.0/ref/Console.client.dll
