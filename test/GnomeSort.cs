@@ -1,29 +1,64 @@
+
+using Microsoft.IdentityModel.Tokens;
+
 public class GnomeSort
 {
     public int[] array = Array.Empty<int>();  // нужно для очистки. После этого нужно везде проверку добавить
     private Random random = new Random();
-    public int low_b, up_b;
 
      // длину массива можно записать, чтобы сравнивать с передаваемым индексом 
     public GnomeSort() // регулирование значений элементов массива
     {
     }
     // было решено сделать так, чтобы очистить основной класс
+    public bool Add_element(int element, string position, int index = -1)
+    {
+    int[] result;
+
+    switch (position)
+    {
+        case "начало":
+            result = new int[array.Length + 1];
+            result[0] = element;
+            Array.Copy(array, 0, result, 1, array.Length);
+            array = result; // добавил переписваивание, потому что целевая переменная массива - array.
+            return true;
+
+        case "конец":
+            result = new int[array.Length + 1];
+            Array.Copy(array, result, array.Length);
+            result[result.Length - 1] = element;
+            array = result;
+            return true;
+
+        case "после":
+            if (index < 0 || index >= array.Length)
+                return false;
+            result = new int[array.Length + 1];
+            Array.Copy(array, result, index + 1);
+            result[index + 1] = element;
+            Array.Copy(array, index + 1, result, index + 2, array.Length - index - 1);
+            array = result;
+            return true;
+
+        default:
+            return false;
+    }
+
+    }
     public bool Create_array(string arrays) // приду сделаю так, чтобы значения вводились на клиенте, а здесь было переприсваивание массива
     {
         var numbers = arrays.Split(',').Select(int.Parse).ToArray(); // преобразование строки в массив
-
         array = new int[numbers.Length];
-
-        for (int i = 0; i < numbers.Length; i++)
+        for (int i = 0; i < array.Length; i++)
         {
-        array[i] = numbers[i];
+            array[i] = numbers[i];
         }
     return true;
     }
     public bool Edit_array(int index, int value) // Лучше использовать bool, чтобы чаще использовать get_array.
     {
-        if (index<0 || value > up_b || value< low_b || index> array.Length)
+        if (index<0 || index>= array.Length)
         {
             return false;
         }
@@ -34,8 +69,6 @@ public class GnomeSort
     {
         if (len <= 0 || low_b> up_b)
             return false;
-        this.low_b = low_b;
-        this.up_b = up_b;
         array = new int[len];
         for (int i = 0; i< len; i++)
         {
@@ -57,8 +90,10 @@ public class GnomeSort
     {
         return array[index];
     }
-    public int[] GnomeSortic()
+    public bool GnomeSortic()
     {
+        if (array.IsNullOrEmpty())
+            return false;
         int index = 0;
 
         while (index < array.Length)
@@ -74,11 +109,11 @@ public class GnomeSort
                 index--; // Двигаемся назад
             }
         }
-        return array;
+        return true;
     }
     public string Delete_array()
     {
-        Array.Clear(array);
+        array = Array.Empty<int>();
         return "Массив был успешно удален";
     }
     public void Go_back_array(int[] prev_array) // переустанавливает знаение текущего массива на предыдущий, а это самое главное 
@@ -87,3 +122,4 @@ public class GnomeSort
     }
 }
 /// пояснительные моменты: 13.11.2024 - проект не хотел компилироваться из-за базы данных. Я ее добавил в проект, но не реализовал
+

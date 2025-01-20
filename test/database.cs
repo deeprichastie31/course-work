@@ -143,4 +143,39 @@ public class DBManager
     }
 }
 
+
+// данным методом я создал базу для будущих вопросов якову. Мой главный вопрос
+// 1) В методичке сказано, что вместе со сменой пароля, должен меняться и токен. Как я понимаю, чтобы это сделать, в базе данных нужно хранить поле с токеном,
+// который после смены пароля вклинивается в параметры куки уже на клиенте. И по идее каждый запрос должен только и делать, что проверять токен у куки. 
+public bool Change_Password(string login, string oldPassword, string newPassword)
+{
+    if (connect == null || connect.State != System.Data.ConnectionState.Open)
+    {
+        Console.WriteLine("База данных недоступна.");
+        return false;
+    }
+
+    try
+    {
+        if (!CheckUser(login, oldPassword))
+        {
+            Console.WriteLine("Старый пароль неверный.");
+            return false;
+        }
+
+        string request = "UPDATE users SET password = @newPassword WHERE login = @login";
+        var command = new SqliteCommand(request, connect);
+
+        command.Parameters.AddWithValue("@newPassword", Hash_password(newPassword));
+        command.Parameters.AddWithValue("@login", login);
+
+        int rowsAffected = command.ExecuteNonQuery();
+        return rowsAffected == 1; // true, если обновлена ровно одна запись
+    }
+    catch (Exception exp)
+    {
+        Console.WriteLine($"Ошибка выполнения запроса: {exp.Message}");
+        return false;
+    }
+}
 }

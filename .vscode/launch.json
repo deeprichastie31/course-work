@@ -36,6 +36,7 @@
     }
   },
   "configurations": [
+
     {
       "name": "C#: Console.Client",
       "type": "dotnet",

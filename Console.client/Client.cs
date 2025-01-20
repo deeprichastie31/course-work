@@ -144,7 +144,7 @@ async Task<(string, bool)> requestSender(string request, string action, string? 
         case "patch":
             var patchMethod = new HttpMethod("PATCH");
             var requestMessage = new HttpRequestMessage(patchMethod, request) { Content = null};
-            response = await client.SendAsync(requestMessage);
+            response = await client.SendAsync(requestMessage); // чтобы не прикладывать контент
             break;
         case "delete":
             response = await client.DeleteAsync(request);
@@ -154,10 +154,26 @@ async Task<(string, bool)> requestSender(string request, string action, string? 
     }
    
     string responseText = await response.Content.ReadAsStringAsync(); // должен получить все, что находится в структуре rgvalues по данному запросу
+    if (responseText == "")
+    {
+        return (responseText,response.IsSuccessStatusCode);
+    }
     if (responseWeNeed == "history")
     {
-        ResponseForHistory forHistory = JsonSerializer.Deserialize<ResponseForHistory>(responseText);
-        return (forHistory.operation,response.IsSuccessStatusCode);
+        if (responseText == "[]")
+        {
+            Console.WriteLine("История пуста!");
+            return (responseText,response.IsSuccessStatusCode);
+        }
+        List<ResponseForHistory> responseTextHist = JsonSerializer.Deserialize<List<ResponseForHistory>>(responseText);
+        foreach (var item in responseTextHist)
+        {
+            Console.WriteLine($"Операция: {item.operation}");
+            Console.WriteLine($"Результат: {item.result}"); // большего пользователю и не нужно как будто
+            Console.WriteLine($"Параметры запроса: {item.parameters}");
+            Console.WriteLine();
+        }
+        return (responseText,response.IsSuccessStatusCode);
     }
     ServerResponse responseJson = JsonSerializer.Deserialize<ServerResponse>(responseText);
     switch (responseWeNeed)
@@ -214,22 +230,20 @@ while (!flag)
     try // если адрес дефолтный, то все проверки он пройдет
     {
         client.BaseAddress = new Uri(server_url, UriKind.Absolute); // преобразование в uri, проверка формата
-        flag = true;
-        // string request = "test";
-        // var (response, IsSuccessStatusCode) = await requestSender(request, "get", "messege"); 
-        // if (IsSuccessStatusCode)
-        // {
-        //     Console.WriteLine(response);
-        //     flag = true;
-        // }
-        // else
-        // {
-        //     throw new HttpRequestException();
-        // }
+        var (response, IsSuccessStatusCode) = await requestSender("test", "get", "messege"); 
+        if (IsSuccessStatusCode)
+        {
+            Console.WriteLine(response);
+            flag = true;
+        }
+        else
+        {
+            throw new HttpRequestException();
+        }
     }
     catch (HttpRequestException exp)
     {
-        Console.WriteLine("Сервер недоступен" + exp.Message);
+        Console.WriteLine("Сервер недоступен" +" "+ exp.Message);
     }
     catch (UriFormatException)
     {
@@ -267,9 +281,9 @@ int k = 0;
 while(!flag)
 {
     Console.WriteLine("Вы успешно авторизовались, теперь вы можете вершить судьбу человечества в этом мире!");
-    Console.WriteLine("Выберите что вы хотите сделать с массивом:\n1) Сгенерировать массив автоматически\n2) Создать массив вручную\n3) Отсортировать массив\n4)Вывести массив\n5) Получить часть массива\n6) Получить элемент массива\n7)Скорректировать массив\n8) Удалить массив\n9) Перейти в раздел истории запросов\n10) Выйти из программы");
+    Console.WriteLine("Выберите что вы хотите сделать с массивом:\n1) Сгенерировать массив автоматически\n2) Создать массив вручную\n3) Отсортировать массив\n4)Вывести массив\n5) Получить часть массива\n6) Получить элемент массива\n7)Скорректировать массив\n8) Добавить элемент в массив \n9) Удалить массив\n10) Перейти в раздел истории запросов\n11) Поменять пароль \n 12) Выйти из программы");
      // нужно для того, чтобы отслеживать выполнил ли пользователь действия, которые записываются в историю
-        int chose = GetValidIntInput("Выбор действия",0, 10);
+        int chose = GetValidIntInput("Выбор действия",0, 12);
         switch (chose)
         {
             case 1:
@@ -337,8 +351,8 @@ while(!flag)
                 Console.WriteLine("Вы выбрали получить часть массива");
                 int low_ind = GetValidIntInput("Введите нижнюю границу среза");
                 int up_ind = GetValidIntInput("Введите верхнюю границу среза", low_ind);
-                string request_5 = "/Get_part_array?low_ind" + low_ind + "&up_ind" + up_ind;
-                var (response_5, IsSuccessStatusCode_5) = await requestSender(request_5, "get", "messege&singlevalue");
+                string request_5 = "/Get_part_array?low_ind=" + low_ind + "&up_ind=" + up_ind;
+                var (response_5, IsSuccessStatusCode_5) = await requestSender(request_5, "get", "messege&array");
                 if(IsSuccessStatusCode_5)
                 {
                     Console.WriteLine(response_5);
@@ -401,6 +415,44 @@ while(!flag)
                 }
                 break;
             case 8:
+                try
+                {
+                    Console.WriteLine("Вы выбрали добавить элемент в массив");
+                    int element_add = GetValidIntInput("Введите число, которое вы хотите вставить");
+                    int positions = GetValidIntInput("1 - в начало, 2 - в конец, 3 - после выбранного индекса ", 1, 3);
+                    int index_add = -1;
+                    string position = "начало";
+                    switch (positions)
+                    {
+                        case 1:
+                            position = "начало";
+                            break;
+                        case 2:
+                            position = "конец";
+                            break;
+                        case 3:
+                            position = "после";
+                            index_add = GetValidIntInput("Введите индекс, после которого вы хотите вставить элемент");
+                            break;
+                    }
+                    string request_add = "/Add_element?element=" + element_add + "&position=" + position + "&index=" + index_add;
+                    var (response_add, IsSuccessStatusCode_add) = await requestSender(request_add, "patch", "messege");
+                    if(IsSuccessStatusCode_add)
+                    {
+                        Console.WriteLine(response_add);
+                    }
+                    else
+                    {
+                        throw new ArgumentException(response_add);
+                    }
+                }
+                catch (ArgumentException exp)
+                {
+                    Console.WriteLine(exp.Message);
+                }
+                
+                break;
+            case 9:
                 // здесь по аналогии обрабатывать ничего не нужно.
                 k++;
                 Console.WriteLine("Вы выбрали удалить массив");
@@ -408,7 +460,7 @@ while(!flag)
                 var (response_8, IsSuccessStatusCode_8) = await requestSender(request_8, "delete", "messege");
                 Console.WriteLine(response_8); 
                 break;
-            case 9:
+            case 10:
                     Console.WriteLine("Вы выбрали работу с историей запросов");
                     if (k == 0)
                     {
@@ -417,36 +469,88 @@ while(!flag)
                     }
                     else
                     {
-                        Console.WriteLine("1. Получить историю\n2. Удалить историю\n3. Вернуться к предыдущему состоянию\n4. Выйти");
+                        Console.WriteLine("1. Получить историю\n2. Удалить историю\n3.Выйти");
                         int choose = GetValidIntInput("Выберите что вы хотите сделать", 1, 4);
                         switch(choose)
                         {
                             case 1:
                                 Console.WriteLine("Вы выбрали получить историю");
                                 string request_91 = "/Get_history";
-                                var (response_91, IsSuccessStatusCode_91) = await requestSender(request_91, "get", "history");
-                                Console.WriteLine(response_91);
+                                var (response_91, IsSuccessStatusCode_91) = await requestSender(request_91, "get", "history"); 
+                                // тут будут неюзабельные переменные, потому что они не нужны. Вывод происходит в самом методе
                                 break;
                             case 2:
                                 Console.WriteLine("Вы выбрали удалить историю");
-                                string request_92 = "/Delete_history";
+                                string request_92 = "/Clear_history";
                                 var (response_92, IsSuccessStatusCode_92) = await requestSender(request_92, "delete", "messege");
                                 Console.WriteLine(response_92);
                                 break;
-                            case 3:
-                                // нет обработки исключения, потому что пользователь не родит здесь числа, чтобы заполнить историю запросов.
-                                Console.WriteLine("Вы выбрали вернуться на шаг назад");
-                                    var request_93 = "/Go_back";
-                                    var (response_93, IsSuccessStatusCode_93) = await requestSender(request_93, "delete", "messege&array");
-                                    Console.WriteLine(response_93);           
-                                break;
-                            default: // default отвечает за обработку числа 4.
+                            default: // default отвечает за обработку цифры 3.
                                 break;
                         }
                     }
                     break;
-            default:
+            case 11:
+                Console.WriteLine("Вы выбрали поменять пароль пользователя");
+                var request_10 = "/current_user";
+                var (response_10, IsSuccessStatusCode_10) = await requestSender(request_10, "get", "messege");
+                if (!IsSuccessStatusCode_10)
+                {
+                    Console.WriteLine("Текущий пользователь: "+ " " + response_10);
+                    break;
+                }
+                Console.WriteLine(response_10);
+                
+                bool mark = false;
+                
+                while (!mark)
+                {
+                    try
+                    {
+                    Console.WriteLine("Введите текущий пароль пользователя");
+                    string? oldPassword = Console.ReadLine(); 
+                    Console.WriteLine("Введите новый пароль пользователя");
+                    string? newPassword = Console.ReadLine(); 
+                    if (string.IsNullOrEmpty(newPassword) || string.IsNullOrEmpty(oldPassword))
+                        Console.WriteLine("Повторите ввод пароля!");
+                    else
+                    { 
+                        string request_11 = "Change_password?login="+ response_10 + "&oldPassword="+ oldPassword +"&newPassword="+ newPassword;
+                        var (response_11, IsSuccessStatusCode_11) = await requestSender(request_11, "patch", "messege");
+                        if (!IsSuccessStatusCode_11)
+                        {
+                            throw new ArgumentException("Проверьте корректность старого пароля");
+                            
+                        }
+                        else 
+                        {
+                            Console.WriteLine(response_11);
+                            Console.WriteLine("Теперь вы будете авторирзованы по-новой и весь ваш прогресс слетит");
+                            string request_13 = "/logout";
+                            var (response_13, IsSuccessStatusCode_13) = await requestSender(request_13, "post", "messege"); // выполнился выход из программы
+                            if(!LoginOnServer(response_10,newPassword))
+                            {
+                                Console.WriteLine("Что-то пошло не так");
+                                mark = true;
+                                break;
+                            }
+                            mark = true;
+                        }
+                    }
+                    }
+                    catch (ArgumentException exp)
+                    {
+                        Console.WriteLine(exp.Message);
+                        mark = false;
+                    }
+                    
+                }
+                break;
+            case 12: // отвечает за обработку числа 10
                 Console.WriteLine("Выполняется выход из программы.....");
+                string request_12 = "/logout";
+                var (response_12, IsSuccessStatusCode_12) = await requestSender(request_12, "post", "messege");
+                Console.WriteLine(response_12);
                 flag = true;
                 break;
         }
